@@ -13,7 +13,7 @@ object Day06 {
                 when (sign) {
                     "+" -> { e1: Long, e2: Long -> e1 + e2 }
                     "*" -> { e1: Long, e2: Long -> e1 * e2 }
-                    else -> error("unsigned sign: $sign")
+                    else -> error("unknown sign: $sign")
                 }
             }
 //        println(operation)
