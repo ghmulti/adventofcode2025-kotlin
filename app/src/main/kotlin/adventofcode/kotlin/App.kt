@@ -19,5 +19,6 @@ fun main() {
 //    Day08.solve()
 //    Day09.solve()
 //    Day10.solve()
-    Day11.solve()
+//    Day11.solve()
+    Day12.solve()
 }
