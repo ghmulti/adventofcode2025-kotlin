@@ -7,7 +7,7 @@ import kotlin.collections.plus
 object Day10 {
 
     fun solve() {
-        val lines = javaClass.classLoader.getResource("day10.txt")!!
+        val lines = javaClass.classLoader.getResource("day10-test.txt")!!
             .readText().lines().filter { it.isNotBlank() }
 //        println(lines)
 
@@ -17,92 +17,7 @@ object Day10 {
         val minNumberOfPresses = machines.sumOf(::findMinNumberOfButtonPresses)
         println("Result1: $minNumberOfPresses")
 
-        val minNumberOfPressesForJoltage = machines.sumOf(::findMinNumberOfButtonPressesForJoltage)
-        println("Result2: $minNumberOfPressesForJoltage")
-    }
-
-    private fun findMinNumberOfButtonPressesForJoltage(machine: Machine): Int {
-        println("Searching solution for ${machine.line}")
-        val buttonsList = bfs(machine)
-        println("Found buttons[${buttonsList.size}]: ${buttonsList.map { it.raw }}")
-        return buttonsList.size
-    }
-
-    private fun bfs(machine: Machine): List<Button> {
-        val start = machine.buttons.maxByOrNull { it.stateNum.sum() } ?: error("???")
-        println("Start element $start")
-
-        val defaultState = StateHolder(
-            pressed = listOf(start),
-            buttonsLeft = machine.buttons,
-        )
-        val queue = ArrayDeque<StateHolder>().apply { add(defaultState) }
-        while (queue.isNotEmpty()) {
-            val stateHolder = queue.removeFirst()
-
-            val buttonVariants: List<List<Button>> = stateHolder.buttonsLeft.flatMap { button ->
-                buttonMultiplier(button = button, stateHolder = stateHolder, joltage = machine.joltage)
-            }.sortedWith(compareBy<List<Button>> { it.size }.thenByDescending { combinePressed(it).sum() })
-
-            val solution = findSolution(variants = buttonVariants, joltage = machine.joltage, stateHolder = stateHolder)
-            if (solution != null) {
-                return solution
-            }
-
-            val children = buttonVariants.map { sameButtons ->
-                StateHolder(
-                    pressed = stateHolder.pressed + sameButtons,
-                    buttonsLeft = stateHolder.buttonsLeft.filter { it != sameButtons.first() },
-                )
-            }
-            queue.addAll(children)
-        }
-        error("Unable to find")
-    }
-
-    private fun findSolution(variants: List<List<Button>>, stateHolder: StateHolder, joltage: List<Int>): List<Button>? {
-        val pressed = combinePressed(stateHolder.pressed)
-        val joltageWithoutPressed = joltage.decreaseWith(pressed)
-        val result = variants.firstOrNull { buttons ->
-            val newPressed = combinePressed(buttons)
-            val totalPressed = joltageWithoutPressed.decreaseWith(newPressed)
-            totalPressed.sum() == 0
-        }
-        return if (result != null) {
-            stateHolder.pressed + result
-        } else {
-            null
-        }
-    }
-
-    private fun buttonMultiplier(button: Button, stateHolder: StateHolder, joltage: List<Int>): List<List<Button>> {
-        val combined = combinePressed(stateHolder.pressed)
-        val joltageWithoutPressed = joltage.decreaseWith(combined)
-        val result = generateSequence(
-            seed = emptyList<Button>()
-        ) { buttons ->
-            val addB = buttons + listOf(button)
-            val combinedAddB = combinePressed(addB)
-            val joltageState = joltageWithoutPressed.decreaseWith(combinedAddB)
-            if (joltageState.all { it >= 0 }) addB else null
-        }.drop(1).toList()
-        return result
-    }
-
-    private data class StateHolder(
-        val buttonsLeft: List<Button>,
-        val pressed: List<Button>,
-    )
-
-    private fun combinePressed(pressed: List<Button>): List<Int> {
-        val defaultState = (0 until pressed.first().stateNum.size).map { 0 }
-        return pressed.fold(defaultState) { acc, button ->
-            acc.mapIndexed { i, v -> v + button.stateNum[i] }
-        }
-    }
-
-    private fun List<Int>.decreaseWith(a: List<Int>): List<Int> {
-        return this.mapIndexed { i, v -> v - a[i] }
+        // https://www.reddit.com/r/adventofcode/comments/1pk87hl/2025_day_10_part_2_bifurcate_your_way_to_victory/
     }
 
     private fun findMinNumberOfButtonPresses(machine: Machine): Int {
@@ -142,7 +57,11 @@ object Day10 {
         val targetState: List<Boolean>,
         val buttons: List<Button>,
         val joltage: List<Int>,
-    )
+    ) {
+        override fun toString(): String {
+            return "Machine: $buttons $joltage"
+        }
+    }
 
     private data class Button(
         val raw: String,
